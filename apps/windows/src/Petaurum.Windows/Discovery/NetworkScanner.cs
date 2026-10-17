@@ -17,6 +17,9 @@ public sealed class NetworkScanner
         if (subnets.Count == 0)
             throw new InvalidOperationException("No active IPv4 network connection found.");
 
+        // Browse for mDNS services now, so replies arrive while the ping sweep runs.
+        await using var mdns = MdnsNames.Start(subnets);
+
         var targets = subnets.SelectMany(s => s.Hosts()).Distinct().ToList();
         progress?.Report($"Pinging {targets.Count} addresses…");
         var responders = await PingSweepAsync(targets, cancellationToken);
@@ -32,15 +35,27 @@ public sealed class NetworkScanner
             found[subnet.LocalAddress] = (subnet.LocalMac, true);
 
         progress?.Report($"Resolving names for {found.Count} devices…");
-        var names = await ResolveNamesAsync(found.Keys, cancellationToken);
+        var addresses = found.Keys.ToList();
+        mdns.QueryAddresses(addresses);
+        var deadline = Task.Delay(NameLookupTimeout, cancellationToken);
+        var dnsNames = ResolveDnsNamesAsync(addresses, cancellationToken);
+        var netBiosNames = NetBiosNames.QueryAsync(addresses, NameLookupTimeout, cancellationToken);
+        // Loading the vendor list takes a moment, so do it while waiting on the network.
+        var vendors = Task.Run(() => found.ToDictionary(kv => kv.Key, kv => OuiVendors.Find(kv.Value.Mac)), cancellationToken);
+        await Task.WhenAll(deadline, dnsNames, netBiosNames, vendors);
+        var mdnsNames = mdns.GetNames(addresses);
 
         var now = DateTimeOffset.Now;
         return found
             .Select(kv =>
             {
+                var mdnsName = mdnsNames.GetValueOrDefault(kv.Key);
                 // DNS can name this computer something unhelpful (Docker maps it to host.docker.internal).
-                var name = kv.Value.IsSelf ? Environment.MachineName : names.GetValueOrDefault(kv.Key);
-                return new Device(kv.Key, kv.Value.Mac, name, kv.Value.IsSelf,
+                var name = kv.Value.IsSelf
+                    ? Environment.MachineName
+                    : BestName(kv.Key, mdnsName.ServiceName, dnsNames.Result.GetValueOrDefault(kv.Key),
+                        mdnsName.HostName, netBiosNames.Result.GetValueOrDefault(kv.Key));
+                return new Device(kv.Key, kv.Value.Mac, name, vendors.Result[kv.Key], kv.Value.IsSelf,
                     kv.Value.IsSelf || responders.Contains(kv.Key), now);
             })
             .OrderBy(d => d.SortKey)
@@ -68,7 +83,13 @@ public sealed class NetworkScanner
         return responders;
     }
 
-    private static async Task<Dictionary<IPAddress, string>> ResolveNamesAsync(IEnumerable<IPAddress> addresses, CancellationToken cancellationToken)
+    /// <summary>The first usable name, in the order of specs/domain/device.md, "Names".</summary>
+    private static string? BestName(IPAddress address, params string?[] candidates) =>
+        candidates
+            .Select(n => n?.Trim().TrimEnd('.'))
+            .FirstOrDefault(n => !string.IsNullOrEmpty(n) && n != address.ToString());
+
+    private static async Task<Dictionary<IPAddress, string>> ResolveDnsNamesAsync(IEnumerable<IPAddress> addresses, CancellationToken cancellationToken)
     {
         var lookups = addresses.Select(async ip =>
         {

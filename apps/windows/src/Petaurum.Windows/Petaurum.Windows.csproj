@@ -14,6 +14,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- IEEE MAC prefix registry; regenerate with tools/Update-OuiList.ps1. -->
+    <EmbeddedResource Include="Discovery\oui.txt" LogicalName="Petaurum.Windows.Discovery.oui.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Keep WinForms/System.Drawing out of global usings so they don't clash with WPF types. -->
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
