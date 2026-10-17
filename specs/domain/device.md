@@ -25,9 +25,11 @@ For now a device is identified by its IP address. A MAC address is more stable a
 A device can have several names, one per source. The best one becomes `hostName`, preferring names a person chose over names a machine made up:
 
 1. **mDNS service name**: the instance name a device advertises over DNS-SD, e.g. `Kitchen speaker` or `Office printer`. Some services carry a friendlier name inside it or in a TXT record: AirPlay audio (`_raop`) prefixes the name with the MAC and `@`, which is dropped, and Google Cast puts the name the user chose in the TXT key `fn`. A service name that looks machine-generated (a UUID or a long run of hex digits) is skipped.
-2. **Reverse DNS**: the PTR record for the IP, usually the DHCP host name the router recorded.
-3. **mDNS host name**: the `.local` name the device answers to, from a reverse PTR query or an A record.
-4. **NetBIOS name**: the unique workstation name (suffix `<00>`) from a NetBIOS node status query.
+2. **UPnP friendly name**: the `friendlyName` in the root device description a device points to from its SSDP reply, e.g. `Shed Speakers`. Some devices append their IP in parentheses (`C4-VDB-W(192.168.1.239)`); that part is dropped.
+3. **Reverse DNS**: the PTR record for the IP, usually the DHCP host name the router recorded.
+4. **mDNS host name**: the `.local` name the device answers to, from a reverse PTR query or an A record.
+5. **NetBIOS name**: the unique workstation name (suffix `<00>`) from a NetBIOS node status query.
+6. **UPnP model**: when a device description has no usable friendly name, its `manufacturer` and `modelName` (e.g. `LUMA`), or failing those the domain of its `deviceType` when that names a model rather than a schema like `schemas-upnp-org` (`urn:AN-210-SW-8-POE:device:Switch:1` gives `AN-210-SW-8-POE`). This says what a device is, not which one it is, so it comes last.
 
 Names are trimmed and lose any trailing dot. A name that is just the IP address is ignored.
 
