@@ -25,7 +25,7 @@ Specs come first: when a behaviour changes, update `specs/` and then each app th
 
 | App | Status | Stack |
 |-----|--------|-------|
-| [Windows](apps/windows/README.md) | Device list from ARP + ping sweep, tray icon | .NET 9, WPF |
+| [Windows](apps/windows/README.md) | Device list from ARP + ping sweep, names from DNS/NetBIOS/mDNS, vendors, tray icon | .NET 9, WPF |
 
 ## Roadmap
 

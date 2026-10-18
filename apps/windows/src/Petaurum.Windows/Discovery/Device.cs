@@ -9,6 +9,7 @@ public sealed record Device(
     IPAddress IpAddress,
     PhysicalAddress? MacAddress,
     string? HostName,
+    string? Vendor,
     bool IsThisComputer,
     bool RespondedToPing,
     DateTimeOffset LastSeen)
@@ -17,6 +18,9 @@ public sealed record Device(
         (HostName ?? "—") + (IsThisComputer ? " (this computer)" : "");
 
     public string IpText => IpAddress.ToString();
+
+    public string VendorText =>
+        Vendor ?? (MacAddress is not null && OuiVendors.IsLocallyAdministered(MacAddress) ? "Private address" : "—");
 
     public string MacText => MacAddress is null
         ? "—"
