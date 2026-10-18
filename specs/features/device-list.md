@@ -32,6 +32,7 @@ A scan finds devices using only what the operating system can see without extra 
      Send the browse to the multicast group `224.0.0.251:5353` as soon as the scan starts, so replies arrive during the ping sweep. Once the device IPs are known, send each device its reverse PTR query and the browse straight to its port 5353, and send the reverse PTR queries to the group as well. Both matter: some devices (Google Cast) answer only queries sent straight to them, and others only the group.
 
      Use every record in a reply (answers and additional records): A records map host names to IPs, SRV records map service instances to host names, and TXT records carry extra names. An instance whose host name can't be resolved belongs to the IP that sent the reply.
+   - **SSDP / UPnP:** send an `M-SEARCH` for `ssdp:all` (with `MX: 1`) to the multicast group `239.255.255.250:1900` from each subnet's local address as soon as the scan starts. Once the device IPs are known, send the same `M-SEARCH` straight to each device's port 1900 and to the group again: some devices answer only one or the other, and replies to the first search can be lost while the ping sweep keeps devices busy. Replies come back by unicast to the sending port, so nothing has to bind port 1900. For each reply, fetch the `LOCATION` URL (the device description XML) once, with a short HTTP timeout, but only if it points at the IP that sent the reply. Take the root device's `friendlyName`, `manufacturer`, `modelName` and `deviceType`.
    - Send each query twice, a short interval apart, because UDP can drop packets.
    - All sources share one deadline of about 2 seconds, so a scan of a /24 still takes only a few seconds.
 7. **Find vendors.** Look up each MAC address as described in [Device](../domain/device.md#vendor). This needs no network traffic.
@@ -43,7 +44,7 @@ One row per device, columns in this order: **Name**, **Vendor**, **IP address**,
 ## Later
 
 - Remember devices between scans and show when each was last seen.
-- More name sources: SSDP/UPnP (friendly names and models from device descriptions), LLMNR.
+- More name sources: LLMNR.
 - Detect which ports serve a web UI (80, 443, 8080…) and link to the right one, including https.
 - Scan on a schedule.
 

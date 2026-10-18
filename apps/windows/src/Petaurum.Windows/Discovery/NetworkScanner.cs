@@ -17,8 +17,9 @@ public sealed class NetworkScanner
         if (subnets.Count == 0)
             throw new InvalidOperationException("No active IPv4 network connection found.");
 
-        // Browse for mDNS services now, so replies arrive while the ping sweep runs.
+        // Browse for mDNS services and search for UPnP devices now, so replies arrive while the ping sweep runs.
         await using var mdns = MdnsNames.Start(subnets);
+        await using var ssdp = SsdpNames.Start(subnets);
 
         var targets = subnets.SelectMany(s => s.Hosts()).Distinct().ToList();
         progress?.Report($"Pinging {targets.Count} addresses…");
@@ -37,6 +38,7 @@ public sealed class NetworkScanner
         progress?.Report($"Resolving names for {found.Count} devices…");
         var addresses = found.Keys.ToList();
         mdns.QueryAddresses(addresses);
+        ssdp.QueryAddresses(addresses);
         var deadline = Task.Delay(NameLookupTimeout, cancellationToken);
         var dnsNames = ResolveDnsNamesAsync(addresses, cancellationToken);
         var netBiosNames = NetBiosNames.QueryAsync(addresses, NameLookupTimeout, cancellationToken);
@@ -44,17 +46,19 @@ public sealed class NetworkScanner
         var vendors = Task.Run(() => found.ToDictionary(kv => kv.Key, kv => OuiVendors.Find(kv.Value.Mac)), cancellationToken);
         await Task.WhenAll(deadline, dnsNames, netBiosNames, vendors);
         var mdnsNames = mdns.GetNames(addresses);
+        var upnpNames = ssdp.GetNames(addresses);
 
         var now = DateTimeOffset.Now;
         return found
             .Select(kv =>
             {
                 var mdnsName = mdnsNames.GetValueOrDefault(kv.Key);
+                var upnpName = upnpNames.GetValueOrDefault(kv.Key);
                 // DNS can name this computer something unhelpful (Docker maps it to host.docker.internal).
                 var name = kv.Value.IsSelf
                     ? Environment.MachineName
-                    : BestName(kv.Key, mdnsName.ServiceName, dnsNames.Result.GetValueOrDefault(kv.Key),
-                        mdnsName.HostName, netBiosNames.Result.GetValueOrDefault(kv.Key));
+                    : BestName(kv.Key, mdnsName.ServiceName, upnpName.FriendlyName, dnsNames.Result.GetValueOrDefault(kv.Key),
+                        mdnsName.HostName, netBiosNames.Result.GetValueOrDefault(kv.Key), upnpName.Model);
                 return new Device(kv.Key, kv.Value.Mac, name, vendors.Result[kv.Key], kv.Value.IsSelf,
                     kv.Value.IsSelf || responders.Contains(kv.Key), now);
             })
