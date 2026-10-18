@@ -39,7 +39,9 @@ A scan finds devices using only what the operating system can see without extra 
 
 ## Display
 
-One row per device, columns in this order: **Name**, **Vendor**, **IP address**, **MAC address**. Follow the display rules in [Device](../domain/device.md). Clicking an IP opens `http://<ip>/` in the default browser.
+One entry per device, showing its **name**, **vendor**, **IP address** and **MAC address**, with the name most prominent. Follow the display rules in [Device](../domain/device.md). Opening a device opens `http://<ip>/` in the default browser.
+
+How the list looks is up to each app: it **should** follow its platform's current design language rather than a shared Petaurum look (see [Platform notes](#platform-notes)).
 
 ## Later
 
@@ -50,4 +52,4 @@ One row per device, columns in this order: **Name**, **Vendor**, **IP address**,
 
 ## Platform notes
 
-- **Windows:** the app lives in the system tray. Closing the window hides it; Exit is in the tray menu.
+- **Windows:** the app lives in the system tray. Closing the window hides it; Exit is in the tray menu. The list is a page of cards in the style of Windows 11 Settings (Fluent Design, Mica): each card shows the name, the vendor below it, and the IP and MAC on the right. Clicking a card opens the device; right-clicking offers to copy its IP or MAC. F5 scans again.
