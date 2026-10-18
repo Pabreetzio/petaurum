@@ -2,26 +2,50 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
-    <!-- WinForms only for the tray icon (NotifyIcon); WPF has none of its own. -->
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWinUI>true</UseWinUI>
     <RootNamespace>Petaurum.Windows</RootNamespace>
     <AssemblyName>Petaurum</AssemblyName>
     <Product>Petaurum</Product>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+
+    <!-- Unpackaged, with the Windows App SDK runtime copied next to the exe, so `dotnet run` just works
+         and nothing has to be installed first. -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <Platforms>x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- IEEE MAC prefix registry; regenerate with tools/Update-OuiList.ps1. -->
-    <EmbeddedResource Include="Discovery\oui.txt" LogicalName="Petaurum.Windows.Discovery.oui.txt" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
+    <!-- SettingsCard: the rows of the Windows Settings app. -->
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+    <!-- Notification-area icon with a WinUI menu; WinUI has no tray icon of its own. -->
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.4.1" />
+  </ItemGroup>
+
+  <!-- We only use WinUI and Foundation, but H.NotifyIcon.WinUI needs the whole Microsoft.WindowsAppSDK metapackage,
+       which also brings AI, ML, Search and Widgets. Keep their files out of the build output.
+       Versions match the metapackage's dependencies; bump them together with it. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK.AI" Version="2.5.5" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.ML" Version="2.1.94" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Search" Version="2.5.5" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Widgets" Version="2.0.5" ExcludeAssets="all" />
+    <PackageReference Include="Microsoft.Windows.AI.MachineLearning" Version="2.1.74" ExcludeAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Keep WinForms/System.Drawing out of global usings so they don't clash with WPF types. -->
-    <Using Remove="System.Windows.Forms" />
-    <Using Remove="System.Drawing" />
+    <Content Include="Assets\AppIcon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <!-- IEEE MAC prefix registry; regenerate with tools/Update-OuiList.ps1. -->
+    <EmbeddedResource Include="Discovery\oui.txt" LogicalName="Petaurum.Windows.Discovery.oui.txt" />
   </ItemGroup>
 
 </Project>

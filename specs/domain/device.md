@@ -41,8 +41,9 @@ A MAC with the *locally administered* bit set (second-lowest bit of the first oc
 
 ## Display rules
 
-- **Name:** the host name, or `—` when unknown. Add `(this computer)` for the local machine.
-- **IP:** shown as a link to `http://<ip>/`.
-- **MAC:** shown in a monospace font, or `—` when unknown.
-- **Vendor:** the vendor, `Private address` for a locally administered MAC, or `—` when unknown.
+- **Name:** the host name, or `Unknown device` when unknown. Add `(this computer)` for the local machine.
+- **IP:** links to `http://<ip>/`.
+- **MAC:** shown in a monospace font.
+- **Vendor:** the vendor, or `Private address` for a locally administered MAC.
+- When the MAC or vendor is unknown, leave it out, or show `—` where the layout needs a placeholder (a table column, say).
 - Lists sort by IP address numerically (so `.9` comes before `.10`), not alphabetically.

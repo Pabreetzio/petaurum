@@ -16,7 +16,7 @@ This is a monorepo. Each platform gets its own **native** app, and they all foll
 docs/            Pitch, roadmap, and decisions
 specs/           Platform-neutral specs: domain models, features, behaviour
 apps/
-  windows/       Windows tray app (.NET / WPF)
+  windows/       Windows tray app (.NET / WinUI 3)
 ```
 
 Specs come first: when a behaviour changes, update `specs/` and then each app that implements it.
@@ -25,7 +25,7 @@ Specs come first: when a behaviour changes, update `specs/` and then each app th
 
 | App | Status | Stack |
 |-----|--------|-------|
-| [Windows](apps/windows/README.md) | Device list from ARP + ping sweep, names from DNS/NetBIOS/mDNS, vendors, tray icon | .NET 9, WPF |
+| [Windows](apps/windows/README.md) | Device list from ARP + ping sweep, names from DNS/NetBIOS/mDNS, vendors, tray icon | .NET 10, WinUI 3 |
 
 ## Roadmap
 

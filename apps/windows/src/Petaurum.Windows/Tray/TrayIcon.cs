@@ -1,39 +1,44 @@
-using Drawing = System.Drawing;
-using Forms = System.Windows.Forms;
+using H.NotifyIcon;
+using H.NotifyIcon.Core;
+using Microsoft.UI.Xaml.Controls;
 
 namespace Petaurum.Windows.Tray;
 
-/// <summary>The notification-area icon and its menu.</summary>
+/// <summary>The notification-area icon and its menu, a Fluent MenuFlyout like the system's own tray menus.</summary>
 internal sealed class TrayIcon : IDisposable
 {
-    private readonly Forms.NotifyIcon _notifyIcon;
+    private readonly TaskbarIcon _icon;
 
-    public TrayIcon(Drawing.Icon icon, Action onOpen, Action onScan, Action onExit)
+    public TrayIcon(Action onOpen, Action onScan, Action onExit)
     {
-        var menu = new Forms.ContextMenuStrip();
-        var open = menu.Items.Add("Open Petaurum", null, (_, _) => onOpen());
-        open.Font = new Drawing.Font(open.Font, Drawing.FontStyle.Bold);
-        menu.Items.Add("Scan now", null, (_, _) => onScan());
-        menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Exit", null, (_, _) => onExit());
+        var menu = new MenuFlyout();
+        menu.Items.Add(Item("Open Petaurum", "\uE8A7", onOpen));
+        menu.Items.Add(Item("Scan now", "\uE72C", onScan));
+        menu.Items.Add(new MenuFlyoutSeparator());
+        menu.Items.Add(Item("Exit", "\uE7E8", onExit));
 
-        _notifyIcon = new Forms.NotifyIcon
+        _icon = new TaskbarIcon
         {
-            Icon = icon,
-            Text = "Petaurum",
-            ContextMenuStrip = menu,
-            Visible = true,
+            Icon = new System.Drawing.Icon(AppIcon.Path),
+            ToolTipText = "Petaurum",
+            ContextFlyout = menu,
+            ContextMenuMode = ContextMenuMode.SecondWindow,
+            NoLeftClickDelay = true,
+            LeftClickCommand = new Command(onOpen),
         };
-        _notifyIcon.MouseClick += (_, e) =>
-        {
-            if (e.Button == Forms.MouseButtons.Left) onOpen();
-        };
+        // Efficiency mode would throttle scans while the window is hidden.
+        _icon.ForceCreate(enablesEfficiencyMode: false);
     }
 
-    public void Dispose()
+    public void Dispose() => _icon.Dispose();
+
+    private static MenuFlyoutItem Item(string text, string glyph, Action onClick) =>
+        new() { Text = text, Icon = new FontIcon { Glyph = glyph }, Command = new Command(onClick) };
+
+    private sealed class Command(Action execute) : System.Windows.Input.ICommand
     {
-        _notifyIcon.Visible = false;
-        _notifyIcon.ContextMenuStrip?.Dispose();
-        _notifyIcon.Dispose();
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
+        public bool CanExecute(object? parameter) => true;
+        public void Execute(object? parameter) => execute();
     }
 }

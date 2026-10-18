@@ -15,15 +15,17 @@ public sealed record Device(
     DateTimeOffset LastSeen)
 {
     public string DisplayName =>
-        (HostName ?? "—") + (IsThisComputer ? " (this computer)" : "");
+        (HostName ?? "Unknown device") + (IsThisComputer ? " (this computer)" : "");
 
     public string IpText => IpAddress.ToString();
 
-    public string VendorText =>
-        Vendor ?? (MacAddress is not null && OuiVendors.IsLocallyAdministered(MacAddress) ? "Private address" : "—");
+    /// <summary>Null when unknown, so the UI can leave it out.</summary>
+    public string? VendorText =>
+        Vendor ?? (MacAddress is not null && OuiVendors.IsLocallyAdministered(MacAddress) ? "Private address" : null);
 
-    public string MacText => MacAddress is null
-        ? "—"
+    /// <summary>Null when unknown, so the UI can leave it out.</summary>
+    public string? MacText => MacAddress is null
+        ? null
         : string.Join(":", MacAddress.GetAddressBytes().Select(b => b.ToString("X2")));
 
     /// <summary>Numeric sort key so .9 sorts before .10.</summary>
