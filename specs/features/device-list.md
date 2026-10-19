@@ -13,6 +13,17 @@ The first screen: every device Petaurum can see on the local network.
 - After a scan, the status line shows the device count and the time of the scan.
 - If a scan fails, the status line says so, and the previous results stay visible.
 
+## Memory
+
+The app remembers every device it has seen, so the list appears instantly at launch and a device keeps its custom name.
+
+- On launch, the app **must** show the remembered devices straight away, before the first scan finishes, with the status line saying when they were last scanned.
+- Each scan merges its results into the remembered devices by identity (see [Device](../domain/device.md#identity)), updating IP, names, vendor and `lastSeen`.
+- A remembered device that the latest scan didn't find stays in the list, shown as offline with when it was last seen. Online devices come first. Until the first scan after launch finishes, remembered devices show when they were last seen but aren't marked offline.
+- The user **must** be able to rename a device. An empty name clears the custom name, so the discovered name shows again.
+- The user **may** forget a device, which removes it and its custom name until a scan finds it again.
+- Remembered devices are stored only on this computer.
+
 ## Discovery
 
 A scan finds devices using only what the operating system can see without extra software or privileges:
@@ -39,17 +50,17 @@ A scan finds devices using only what the operating system can see without extra 
 
 ## Display
 
-One entry per device, showing its **name**, **vendor**, **IP address** and **MAC address**, with the name most prominent. Follow the display rules in [Device](../domain/device.md). Opening a device opens `http://<ip>/` in the default browser.
+One entry per device, showing its **name**, **vendor**, **IP address**, **MAC address** and, when the router knows it, its **connection**, with the name most prominent. Follow the display rules in [Device](../domain/device.md). Opening a device opens `http://<ip>/` in the default browser; a device with no known IP can't be opened.
 
 How the list looks is up to each app: it **should** follow its platform's current design language rather than a shared Petaurum look (see [Platform notes](#platform-notes)).
 
 ## Later
 
-- Remember devices between scans and show when each was last seen.
 - More name sources: LLMNR.
 - Detect which ports serve a web UI (80, 443, 8080…) and link to the right one, including https.
 - Scan on a schedule.
 
 ## Platform notes
 
+- **Windows:** remembered devices are stored as JSON in `%LOCALAPPDATA%\Petaurum\devices.json`. Rename and Forget are on each card's right-click menu, and F2 renames the focused card.
 - **Windows:** the app lives in the system tray. Closing the window hides it; Exit is in the tray menu. The list is a page of cards in the style of Windows 11 Settings (Fluent Design, Mica): each card shows the name, the vendor below it, and the IP and MAC on the right. Clicking a card opens the device; right-clicking offers to copy its IP or MAC. F5 scans again.

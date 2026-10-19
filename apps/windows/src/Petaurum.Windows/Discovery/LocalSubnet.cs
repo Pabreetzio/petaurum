@@ -6,7 +6,8 @@ using System.Net.Sockets;
 namespace Petaurum.Windows.Discovery;
 
 /// <summary>An IPv4 subnet this computer is attached to.</summary>
-public sealed record LocalSubnet(IPAddress LocalAddress, int PrefixLength, PhysicalAddress? LocalMac, string InterfaceName)
+public sealed record LocalSubnet(IPAddress LocalAddress, int PrefixLength, PhysicalAddress? LocalMac, string InterfaceName,
+    IPAddress? Gateway)
 {
     private const int MaxHosts = 1024;
 
@@ -47,6 +48,9 @@ public sealed record LocalSubnet(IPAddress LocalAddress, int PrefixLength, Physi
         foreach (var (nic, props) in candidates)
         {
             var mac = nic.GetPhysicalAddress();
+            var gateway = props.GatewayAddresses
+                .Select(g => g.Address)
+                .FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork && !a.Equals(IPAddress.Any));
             foreach (var unicast in props.UnicastAddresses)
             {
                 if (unicast.Address.AddressFamily != AddressFamily.InterNetwork) continue;
@@ -58,7 +62,7 @@ public sealed record LocalSubnet(IPAddress LocalAddress, int PrefixLength, Physi
                 if ((1L << (32 - prefix)) - 2 > MaxHosts) prefix = 24;
 
                 subnets.Add(new LocalSubnet(unicast.Address, prefix,
-                    mac.GetAddressBytes().Length == 6 ? mac : null, nic.Name));
+                    mac.GetAddressBytes().Length == 6 ? mac : null, nic.Name, gateway));
             }
         }
         return subnets;

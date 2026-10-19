@@ -29,6 +29,8 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <!-- Notification-area icon with a WinUI menu; WinUI has no tray icon of its own. -->
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.4.1" />
+    <!-- HTML5 parser for the router's status pages, whose markup is often malformed. -->
+    <PackageReference Include="AngleSharp" Version="1.8.3" />
   </ItemGroup>
 
   <!-- We only use WinUI and Foundation, but H.NotifyIcon.WinUI needs the whole Microsoft.WindowsAppSDK metapackage,

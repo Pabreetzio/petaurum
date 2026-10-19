@@ -122,7 +122,7 @@ public sealed partial class MdnsNames : IAsyncDisposable
                     .Where(i => BelongsTo(i, address))
                     .OrderBy(i => ServiceRank(i.ServiceType))
                     .Select(PreferredName)
-                    .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n) && !LooksMachineGenerated(n));
+                    .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n) && !MachineNames.LooksMachineGenerated(n));
 
                 var hostName = _reverseNames.GetValueOrDefault(address)
                     ?? _hostAddresses.Where(h => h.Value.Contains(address)).Select(h => h.Key).FirstOrDefault();
@@ -215,8 +215,6 @@ public sealed partial class MdnsNames : IAsyncDisposable
         return rank >= 0 ? rank : ServiceTypes.Length;
     }
 
-    private static bool LooksMachineGenerated(string name) => LongHexRun().IsMatch(name.Replace("-", ""));
-
     private static List<(string, ushort)> Browse(IEnumerable<string> names) =>
         names.Select(n => (n.EndsWith(".local", StringComparison.OrdinalIgnoreCase) ? n : n + ".local", DnsMessage.TypePtr)).ToList();
 
@@ -264,6 +262,4 @@ public sealed partial class MdnsNames : IAsyncDisposable
     [GeneratedRegex(@"\s*\[[0-9a-fA-F:]+\]$")]
     private static partial Regex WorkstationSuffix();
 
-    [GeneratedRegex("[0-9a-fA-F]{12,}")]
-    private static partial Regex LongHexRun();
 }

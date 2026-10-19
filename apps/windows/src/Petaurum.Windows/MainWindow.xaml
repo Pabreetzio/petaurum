@@ -15,13 +15,31 @@
         </Grid.RowDefinitions>
 
         <!-- Content extends into the title bar, as in Settings and File Explorer. -->
-        <TitleBar x:Name="AppTitleBar" Title="Petaurum">
+        <TitleBar x:Name="AppTitleBar" Title="Petaurum" IsPaneToggleButtonVisible="True"
+                  PaneToggleRequested="AppTitleBar_PaneToggleRequested">
             <TitleBar.IconSource>
                 <ImageIconSource x:Name="TitleBarIcon" />
             </TitleBar.IconSource>
         </TitleBar>
 
-        <!-- One page for now; a NavigationView goes around this frame once there are more. -->
-        <Frame x:Name="ContentFrame" Grid.Row="1" />
+        <!-- A Settings-style navigation pane; the title bar holds its toggle button. -->
+        <NavigationView x:Name="Nav" Grid.Row="1"
+                        IsBackButtonVisible="Collapsed" IsPaneToggleButtonVisible="False"
+                        IsSettingsVisible="False" PaneDisplayMode="Left" OpenPaneLength="260"
+                        SelectionChanged="Nav_SelectionChanged" ItemInvoked="Nav_ItemInvoked">
+            <NavigationView.MenuItems>
+                <NavigationViewItem x:Name="DevicesItem" Content="Devices">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE839;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem x:Name="RouterItem" Content="Router" SelectsOnInvoked="False" Visibility="Collapsed">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE968;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+            <Frame x:Name="ContentFrame" />
+        </NavigationView>
     </Grid>
 </Window>

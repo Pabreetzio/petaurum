@@ -106,7 +106,7 @@ public sealed partial class SsdpNames : IAsyncDisposable
 
                 var friendlyName = descriptions
                     .Select(d => CleanFriendlyName(d.FriendlyName))
-                    .FirstOrDefault(n => !string.IsNullOrEmpty(n) && !LooksMachineGenerated(n));
+                    .FirstOrDefault(n => !string.IsNullOrEmpty(n) && !MachineNames.LooksMachineGenerated(n));
                 var model = descriptions.Select(Model).FirstOrDefault(n => !string.IsNullOrEmpty(n));
 
                 if (friendlyName is not null || model is not null)
@@ -201,8 +201,6 @@ public sealed partial class SsdpNames : IAsyncDisposable
             : null;
     }
 
-    private static bool LooksMachineGenerated(string name) => LongHexRun().IsMatch(name.Replace("-", ""));
-
     /// <summary>Sends every search, waits a moment, and sends them again in case UDP dropped some.</summary>
     private void SendTwice(IReadOnlyList<(Socket Socket, IPEndPoint Target)> searches)
     {
@@ -232,6 +230,4 @@ public sealed partial class SsdpNames : IAsyncDisposable
     [GeneratedRegex(@"^[a-z0-9.-]+-[a-z]{2,}$")]
     private static partial Regex SchemaDomain();
 
-    [GeneratedRegex("[0-9a-fA-F]{12,}")]
-    private static partial Regex LongHexRun();
 }

@@ -1,8 +1,10 @@
 using System.Runtime.InteropServices;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Petaurum.Windows.Pages;
+using Petaurum.Windows.Router;
 using Petaurum.Windows.Tray;
 using Windows.Graphics;
 
@@ -12,8 +14,13 @@ public sealed partial class MainWindow : Window
 {
     private bool _allowClose;
 
-    public MainWindow(DeviceListViewModel viewModel)
+    private readonly DeviceListViewModel _devices;
+    private readonly RouterViewModel _router;
+
+    public MainWindow(DeviceListViewModel devices, RouterViewModel router)
     {
+        _devices = devices;
+        _router = router;
         InitializeComponent();
 
         ExtendsContentIntoTitleBar = true;
@@ -36,7 +43,38 @@ public sealed partial class MainWindow : Window
             sender.Hide();
         };
 
-        ContentFrame.Navigate(typeof(DevicesPage), viewModel);
+        // Router pages appear once the router is found.
+        foreach (var page in router.Pages)
+            RouterItem.MenuItems.Add(new NavigationViewItem { Content = page.Title, Tag = page });
+        router.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(RouterViewModel.IsAvailable))
+                RouterItem.Visibility = router.IsAvailable ? Visibility.Visible : Visibility.Collapsed;
+        };
+
+        Nav.SelectedItem = DevicesItem;
+    }
+
+    private void AppTitleBar_PaneToggleRequested(TitleBar sender, object args) => Nav.IsPaneOpen = !Nav.IsPaneOpen;
+
+    private void Nav_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
+    {
+        switch (args.SelectedItem)
+        {
+            case NavigationViewItem { Tag: RouterPageViewModel page }:
+                ContentFrame.Navigate(typeof(RouterPageView), new RouterPageView.Parameter(_router, page));
+                break;
+            case NavigationViewItem item when item == DevicesItem:
+                ContentFrame.Navigate(typeof(DevicesPage), _devices);
+                break;
+        }
+    }
+
+    /// <summary>Clicking Router (which also expands it) opens its first page.</summary>
+    private void Nav_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if (args.InvokedItemContainer == RouterItem && Nav.SelectedItem is not NavigationViewItem { Tag: RouterPageViewModel })
+            Nav.SelectedItem = RouterItem.MenuItems[0];
     }
 
     public void ShowAndActivate()
