@@ -11,7 +11,9 @@ public sealed class NetworkScanner
     private const int MaxConcurrentPings = 128;
     private static readonly TimeSpan NameLookupTimeout = TimeSpan.FromSeconds(2);
 
-    public async Task<IReadOnlyList<Device>> ScanAsync(IProgress<string>? progress, CancellationToken cancellationToken)
+    /// <param name="routerNames">Names from the router's device list, by IP, ranked after reverse DNS.</param>
+    public async Task<IReadOnlyList<Device>> ScanAsync(IProgress<string>? progress,
+        IReadOnlyDictionary<IPAddress, string>? routerNames, CancellationToken cancellationToken)
     {
         var subnets = LocalSubnet.Discover();
         if (subnets.Count == 0)
@@ -58,7 +60,7 @@ public sealed class NetworkScanner
                 var name = kv.Value.IsSelf
                     ? Environment.MachineName
                     : BestName(kv.Key, mdnsName.ServiceName, upnpName.FriendlyName, dnsNames.Result.GetValueOrDefault(kv.Key),
-                        mdnsName.HostName, netBiosNames.Result.GetValueOrDefault(kv.Key), upnpName.Model);
+                        routerNames?.GetValueOrDefault(kv.Key), mdnsName.HostName, netBiosNames.Result.GetValueOrDefault(kv.Key), upnpName.Model);
                 return new Device(kv.Key, kv.Value.Mac, name, vendors.Result[kv.Key], kv.Value.IsSelf,
                     kv.Value.IsSelf || responders.Contains(kv.Key), now);
             })
